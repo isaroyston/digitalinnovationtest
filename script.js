@@ -1,6 +1,8 @@
 const audioButton = document.querySelector(".audio-button");
 const chatBox = document.querySelector(".chat-box");
 const webcamVideo = document.querySelector(".webcam-video");
+const explainingVideo = document.getElementById("explainingVideo");
+const avatarImage = document.querySelector(".avatar-video"); // Get the static avatar image element
 
 const DEEPSEEK_API_KEY = "sk-0e19faf29ca241e4bab6264a0536232b"; // Please ensure this key is kept secure and not exposed publicly in production
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
@@ -107,7 +109,6 @@ function displayText(text) {
 function speakText(text) {
   if (!('speechSynthesis' in window)) {
     console.warn("Speech Synthesis not supported in this browser.");
-    // Optionally, display a message to the user that speech output is not available
     return;
   }
 
@@ -115,27 +116,42 @@ function speakText(text) {
   utterance.lang = "zh-CN";
 
   utterance.onstart = () => {
-    console.log("Speech synthesis started. Video paused:", webcamVideo.paused);
+    console.log("Speech synthesis started.");
+    avatarImage.style.display = "none"; // Hide static avatar image
+    explainingVideo.style.display = "block"; // Show explaining video
+    explainingVideo.currentTime = 0; // Start from the beginning
+    explainingVideo.play().catch(err => console.error("Explaining video play failed:", err));
+
+    // If the browser pauses the webcam, we'll try to resume it later.
+    // We are no longer explicitly hiding the webcam feed here.
   };
 
   utterance.onend = () => {
     console.log("Speech synthesis ended.");
-    // Attempt to play the video again if it was paused
+    explainingVideo.pause();
+    explainingVideo.style.display = "none"; // Hide explaining video
+    avatarImage.style.display = "block"; // Show static avatar image
+
+    // Attempt to play the webcam video again if it was paused by the browser
     if (webcamVideo.paused) {
-      console.log("Attempting to resume video playback after speech.");
+      console.log("Attempting to resume webcam video playback after speech.");
       webcamVideo.play().catch(err => {
-        console.error("Failed to resume video playback after speech:", err);
+        console.error("Failed to resume webcam video playback after speech:", err);
       });
     }
   };
 
   utterance.onerror = (event) => {
     console.error("Speech synthesis error:", event.error);
-    // Also try to resume video if it was paused and an error occurred during speech
+    explainingVideo.pause();
+    explainingVideo.style.display = "none"; // Hide explaining video
+    avatarImage.style.display = "block"; // Show static avatar image
+
+    // Also try to resume webcam video if it was paused by the browser
     if (webcamVideo.paused) {
-      console.log("Attempting to resume video playback after speech error.");
+      console.log("Attempting to resume webcam video playback after speech error.");
       webcamVideo.play().catch(err => {
-        console.error("Failed to resume video playback after speech error:", err);
+        console.error("Failed to resume webcam video playback after speech error:", err);
       });
     }
   };
