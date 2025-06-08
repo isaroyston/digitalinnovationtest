@@ -1,0 +1,127 @@
+.macbook-pro {
+  background-color: #ffebc8;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+}
+
+.macbook-pro .overlap-group-wrapper {
+  background-color: #ffebc8;
+  width: 1512px;
+  height: 864px;
+}
+
+.macbook-pro .overlap-group {
+  position: relative;
+  height: 864px;
+}
+
+.macbook-pro .avatar-video {
+  position: absolute;
+  width: 273px;
+  height: 488px;
+  top: 226px;
+  left: 1066px;
+  object-fit: cover;
+}
+
+.macbook-pro .webcam-video {
+  position: absolute;
+  width: 565px;
+  height: 610px;
+  top: 103px;
+  left: 474px;
+}
+
+.macbook-pro .background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1512px;
+  height: 864px;
+}
+
+.macbook-pro .mirror-frame {
+  position: absolute;
+  width: 560px;
+  height: 605px;
+  top: 107px;
+  left: 476px;
+}
+
+.macbook-pro .avatar-video-frame {
+  position: absolute;
+  width: 273px;
+  height: 457px;
+  top: 248px;
+  left: 1066px;
+}
+
+.macbook-pro .ref-image {
+  position: absolute;
+  width: 273px;
+  height: 273px;
+  top: 110px;
+  left: 173px;
+}
+
+.macbook-pro .light-button {
+  position: absolute;
+  width: 37px;
+  height: 18px;
+  top: 764px;
+  left: 763px;
+}
+
+.macbook-pro .chat-box {
+  position: absolute;
+  width: 273px;
+  height: 214px;
+  top: 490px;
+  left: 173px;
+  background-color: #ffffff;
+  border-radius: 25px;
+  border: 6px solid;
+  border-color: #004403;
+}
+
+.macbook-pro .audio-button {
+  position: absolute;
+  width: 93px;
+  height: 63px;
+  top: 640px;
+  left: 348px;
+}
+
+.macbook-pro .light-button-one {
+  left: 811px;
+  position: absolute;
+  width: 61px;
+  height: 61px;
+  top: 727px;
+}
+
+.macbook-pro .light-button-three {
+  left: 954px;
+  position: absolute;
+  width: 61px;
+  height: 61px;
+  top: 727px;
+}
+
+.macbook-pro .light-button-two {
+  left: 882px;
+  position: absolute;
+  width: 61px;
+  height: 61px;
+  top: 727px;
+}
+
+.macbook-pro .upload-photo-button {
+  position: absolute;
+  width: 154px;
+  height: 55px;
+  top: 399px;
+  left: 233px;
+}
