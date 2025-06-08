@@ -192,9 +192,7 @@ if (recognition) {
       displayText(`助手：${assistantReply}`);
 
       const userSaidGoodbye = /再见|拜拜|goodbye/i.test(userText);
-      const assistantSaidGoodbye = /再见|拜拜|下次见|goodbye/i.test(assistantReply);
-
-      if (userSaidGoodbye && assistantSaidGoodbye) {
+      if (userSaidGoodbye) {
         speakText(assistantReply, true); // Pass true for goodbye
       } else {
         speakText(assistantReply, false);
