@@ -28,11 +28,12 @@
 
 .macbook-pro .webcam-video {
   position: absolute;
-  width: 560px;  /* Changed from 565px to match mirror-frame */
-  height: 605px; /* Changed from 700px to match mirror-frame */
-  top: 107px;    /* Changed from 103px to match mirror-frame */
-  left: 476px;   /* Changed from 474px to match mirror-frame */
-  object-fit: cover; /* Ensures video content fills the element, cropping if needed */
+  width: 560px; 
+  height: 605px; 
+  top: 107px;  
+  left: 476px; 
+  object-fit: cover; 
+  transform: scaleX(-1);
 }
 
 .macbook-pro .background {
