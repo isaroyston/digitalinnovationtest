@@ -6,6 +6,12 @@ const avatarIdleVideo = document.getElementById('avatarIdleVideo');
 const avatarTalkingVideo = document.getElementById('avatarTalkingVideo'); // Renamed from avatarVideo
 const avatarGoodbyeVideo = document.getElementById('avatarGoodbyeVideo');
 
+// New elements for background switching
+const backgroundElement = document.querySelector('.background');
+const lightButtonOne = document.querySelector('.light-button-one');
+const lightButtonTwo = document.querySelector('.light-button-two');
+const lightButtonThree = document.querySelector('.light-button-three');
+
 const DEEPSEEK_API_KEY = "sk-0e19faf29ca241e4bab6264a0536232b";
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
@@ -317,4 +323,28 @@ async function getDeepseekReply(userInput) {
 // The switchAvatarVideo function will handle transitions from this state.
 // No explicit call to showAvatarIdle() here is needed if HTML handles initial play.
 // However, to be absolutely sure JS state matches, we can call it.
-showAvatarIdle(); // Call this to initialize the state via JS.
+showAvatarIdle(); // Call this to initialize the state via JS;
+
+// Background image paths
+const backgroundOriginalSrc = 'img/background.svg';
+const backgroundTwoSrc = 'img/background-two.svg'; // Make sure this file exists
+const backgroundThreeSrc = 'img/background-three.svg'; // Make sure this file exists
+
+if (backgroundElement && lightButtonOne && lightButtonTwo && lightButtonThree) {
+  lightButtonOne.addEventListener('click', () => {
+    backgroundElement.src = backgroundOriginalSrc;
+    console.log('Background set to original');
+  });
+
+  lightButtonTwo.addEventListener('click', () => {
+    backgroundElement.src = backgroundTwoSrc;
+    console.log('Background set to two');
+  });
+
+  lightButtonThree.addEventListener('click', () => {
+    backgroundElement.src = backgroundThreeSrc;
+    console.log('Background set to three');
+  });
+} else {
+  console.error('Background or light button elements not found. Background switching will not work.');
+}
