@@ -125,3 +125,7 @@
   top: 399px;
   left: 233px;
 }
+
+#avatarImage, #avatarVideo {
+  transition: opacity 0.3s ease-in-out; /* Adjust duration and timing as needed */
+}

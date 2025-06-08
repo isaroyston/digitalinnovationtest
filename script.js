@@ -7,11 +7,22 @@ const avatarVideo = document.getElementById('avatarVideo');
 const DEEPSEEK_API_KEY = "sk-0e19faf29ca241e4bab6264a0536232b"; // Please ensure this key is kept secure and not exposed publicly in production
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
+const FADE_DURATION = 300; // Milliseconds, should match CSS transition duration
+
 // Function to call when the API starts talking
 function showAvatarVideo() {
-  if (avatarImage) avatarImage.style.display = 'none';
+  if (avatarImage) {
+    avatarImage.style.opacity = '0';
+    setTimeout(() => {
+      avatarImage.style.display = 'none';
+    }, FADE_DURATION);
+  }
   if (avatarVideo) {
-    avatarVideo.style.display = 'block'; // Or 'inline', 'flex', etc., depending on your layout
+    avatarVideo.style.display = 'block'; // Or 'flex', etc., depending on your layout
+    // Ensure display is applied before starting opacity transition
+    requestAnimationFrame(() => {
+      avatarVideo.style.opacity = '1';
+    });
     avatarVideo.play().catch(error => console.error("Avatar video play failed:", error));
   }
 }
@@ -19,16 +30,30 @@ function showAvatarVideo() {
 // Function to call when the API stops talking
 function showAvatarImage() {
   if (avatarVideo) {
-    avatarVideo.style.display = 'none';
-    avatarVideo.pause();
-    // Optional: Reset video to the beginning
-    // avatarVideo.currentTime = 0;
+    avatarVideo.style.opacity = '0';
+    setTimeout(() => {
+      avatarVideo.style.display = 'none';
+      avatarVideo.pause();
+    }, FADE_DURATION);
   }
-  if (avatarImage) avatarImage.style.display = 'block'; // Or 'inline', 'flex', etc.
+  if (avatarImage) {
+    avatarImage.style.display = 'block'; // Or 'flex', etc.
+    // Ensure display is applied before starting opacity transition
+    requestAnimationFrame(() => {
+      avatarImage.style.opacity = '1';
+    });
+  }
 }
 
-// Initial state: show the image
-showAvatarImage();
+// Initial state setup:
+if (avatarImage) {
+    avatarImage.style.opacity = '1';
+    avatarImage.style.display = 'block'; // Or your default display
+}
+if (avatarVideo) {
+    avatarVideo.style.opacity = '0';
+    avatarVideo.style.display = 'none'; // Matches your HTML inline style
+}
 
 async function startWebcam() {
   try {
