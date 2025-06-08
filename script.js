@@ -289,7 +289,7 @@ async function getDeepseekReply(userInput) {
       messages: [
         {
           role: "system",
-          content:" 你是一位温柔友善的AI美妆助手。请用鼓励和友善的语气帮助用户，并保持简短的回复，不要有任何多余的花哨。",
+          content: "你是一位温柔友善的AI美妆助手。请用鼓励和友善的语气帮助用户，保持回答简短扼要。如果需要列出几点，请使用短划线 (-) 或数字 (1., 2.) 来分隔，避免使用星号 (*)。",
         },
         {
           role: "user",
