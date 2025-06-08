@@ -18,55 +18,83 @@ function playVideo(videoElement) {
   }
 }
 
-function switchAvatarVideo(newVideo, loop = true) {
-  const oldVideo = activeAvatarVideo;
+function switchAvatarVideo(newVideoElement, loop = true) {
+    const currentActive = activeAvatarVideo;
 
-  if (oldVideo === newVideo && oldVideo && oldVideo.style.display !== 'none') {
-    if (oldVideo.paused) playVideo(oldVideo);
-    return;
-  }
-
-  if (oldVideo && oldVideo !== newVideo) {
-    oldVideo.style.opacity = '0';
-    setTimeout(() => {
-      if (oldVideo.style.opacity === '0') { // Check if it wasn't changed again
-          oldVideo.style.display = 'none';
-          oldVideo.pause();
-      }
-    }, FADE_DURATION);
-  }
-
-  if (newVideo) {
-    const delay = (oldVideo && oldVideo !== newVideo) ? FADE_DURATION : 0;
-    setTimeout(() => {
-      // Ensure any other avatar videos are hidden if a quick switch happened
-      [avatarIdleVideo, avatarTalkingVideo, avatarGoodbyeVideo].forEach(vid => {
-        if (vid && vid !== newVideo) {
-          vid.style.display = 'none';
-          vid.style.opacity = '0';
-          vid.pause();
+    // If trying to switch to the same video that's already visibly active, ensure it's playing and do nothing else.
+    if (currentActive === newVideoElement && currentActive && currentActive.style.display !== 'none' && currentActive.style.opacity === '1') {
+        if (currentActive.paused) {
+            playVideo(currentActive);
         }
-      });
+        return;
+    }
 
-      newVideo.style.display = 'block';
-      newVideo.loop = loop;
-      newVideo.currentTime = 0;
-      requestAnimationFrame(() => { // Ensure display:block is rendered before opacity transition
-        newVideo.style.opacity = '1';
-      });
-      playVideo(newVideo);
-      activeAvatarVideo = newVideo;
-    }, delay);
-  } else if (oldVideo) { // If newVideo is null, just hide the old one
-    oldVideo.style.opacity = '0';
-    setTimeout(() => {
-      if (oldVideo.style.opacity === '0') {
-          oldVideo.style.display = 'none';
-          oldVideo.pause();
-      }
-      activeAvatarVideo = null;
-    }, FADE_DURATION);
-  }
+    // Immediately start fading out the current video if it exists and is different
+    if (currentActive && currentActive !== newVideoElement) {
+        currentActive.style.opacity = '0';
+    }
+
+    // Pause all videos that are not the new one.
+    // Hide them after a delay if they were the 'currentActive' one that was fading.
+    [avatarIdleVideo, avatarTalkingVideo, avatarGoodbyeVideo].forEach(vid => {
+        if (vid && vid !== newVideoElement) {
+            vid.pause(); // Pause immediately
+            vid.currentTime = 0; // Reset time
+            if (vid === currentActive && currentActive !== newVideoElement) {
+                // This was the video that is now fading out, hide it after the fade
+                setTimeout(() => {
+                    if (vid.style.opacity === '0') { // Ensure it's still meant to be hidden
+                        vid.style.display = 'none';
+                    }
+                }, FADE_DURATION);
+            } else {
+                // This video was not the one actively fading out, hide it immediately
+                // and ensure its opacity is 0 (in case of rapid switches)
+                vid.style.display = 'none';
+                vid.style.opacity = '0';
+            }
+        }
+    });
+
+    if (newVideoElement) {
+        // Delay showing the new video if an old one was fading out (for cross-fade effect)
+        const delay = (currentActive && currentActive !== newVideoElement) ? FADE_DURATION : 0;
+
+        setTimeout(() => {
+            // Ensure again that other videos are hidden, in case of very quick successive calls
+            [avatarIdleVideo, avatarTalkingVideo, avatarGoodbyeVideo].forEach(vid => {
+                if (vid && vid !== newVideoElement) {
+                    vid.style.display = 'none';
+                    vid.style.opacity = '0';
+                    if (!vid.paused) vid.pause(); // Extra check
+                }
+            });
+
+            newVideoElement.style.display = 'block';
+            newVideoElement.loop = loop;
+            newVideoElement.currentTime = 0;
+            
+            // Force a reflow before applying opacity for transition to work reliably
+            // Reading offsetHeight is a common way to trigger reflow
+            // eslint-disable-next-line no-unused-expressions
+            newVideoElement.offsetHeight; 
+
+            newVideoElement.style.opacity = '1';
+            playVideo(newVideoElement);
+            activeAvatarVideo = newVideoElement;
+        }, delay);
+    } else {
+        // If no new video, ensure the current one (if any) is fully hidden after its fade
+        if (currentActive) {
+            setTimeout(() => {
+                if (currentActive.style.opacity === '0') {
+                    currentActive.style.display = 'none';
+                    currentActive.pause(); // Ensure it's paused
+                }
+            }, FADE_DURATION);
+        }
+        activeAvatarVideo = null;
+    }
 }
 
 function showAvatarIdle() {
@@ -255,7 +283,7 @@ async function getDeepseekReply(userInput) {
       messages: [
         {
           role: "system",
-          content: "你是一位温柔友善的AI美妆助理。请用鼓励和亲切的语气帮助用户，并保持回答简短扼要。",
+          content: "你是一位温柔友善的AI美妆助理。请用鼓励和亲切的语气帮助用户，保持回答简短扼要，并以点列形式（例如使用 '*' 或 '-' 作为项目符号）提供答案。",
         },
         {
           role: "user",
