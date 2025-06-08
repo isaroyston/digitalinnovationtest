@@ -6,11 +6,15 @@ const avatarIdleVideo = document.getElementById('avatarIdleVideo');
 const avatarTalkingVideo = document.getElementById('avatarTalkingVideo'); // Renamed from avatarVideo
 const avatarGoodbyeVideo = document.getElementById('avatarGoodbyeVideo');
 
-// New elements for background switching
+// Elements for background switching (ensure these are declared if not already)
 const backgroundElement = document.querySelector('.background');
 const lightButtonOne = document.querySelector('.light-button-one');
 const lightButtonTwo = document.querySelector('.light-button-two');
 const lightButtonThree = document.querySelector('.light-button-three');
+
+// Divs whose background color needs to change (ensure these are declared if not already)
+const macbookProDiv = document.querySelector('.macbook-pro');
+const overlapGroupWrapperDiv = document.querySelector('.macbook-pro .overlap-group-wrapper');
 
 const DEEPSEEK_API_KEY = "sk-0e19faf29ca241e4bab6264a0536232b";
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
@@ -327,24 +331,44 @@ showAvatarIdle(); // Call this to initialize the state via JS;
 
 // Background image paths
 const backgroundOriginalSrc = 'img/background.svg';
-const backgroundTwoSrc = 'img/background-two.svg'; // Make sure this file exists
-const backgroundThreeSrc = 'img/background-three.svg'; // Make sure this file exists
+const backgroundWhiteSrc = 'img/background-white.svg'; // For lightButtonOne
+const backgroundThreeSrc = 'img/background-three.svg'; // For lightButtonThree
 
-if (backgroundElement && lightButtonOne && lightButtonTwo && lightButtonThree) {
+// Corresponding CSS background colors
+const colorOriginal = '#ffebc8'; // For backgroundOriginalSrc (linked to lightButtonTwo)
+const colorWhite = '#FFFFFF';   // For backgroundWhiteSrc (linked to lightButtonOne)
+const colorThree = '#FAC17A';   // For backgroundThreeSrc (linked to lightButtonThree)
+
+if (backgroundElement && lightButtonOne && lightButtonTwo && lightButtonThree && macbookProDiv && overlapGroupWrapperDiv) {
+  // Light Button One (sets "white" theme)
   lightButtonOne.addEventListener('click', () => {
-    backgroundElement.src = backgroundOriginalSrc;
-    console.log('Background set to original');
+    backgroundElement.src = backgroundWhiteSrc;
+    macbookProDiv.style.backgroundColor = colorWhite;
+    overlapGroupWrapperDiv.style.backgroundColor = colorWhite;
+    console.log('Background set to white theme (Button 1)');
   });
 
+  // Light Button Two (sets "original" theme)
   lightButtonTwo.addEventListener('click', () => {
-    backgroundElement.src = backgroundTwoSrc;
-    console.log('Background set to two');
+    backgroundElement.src = backgroundOriginalSrc;
+    macbookProDiv.style.backgroundColor = colorOriginal;
+    overlapGroupWrapperDiv.style.backgroundColor = colorOriginal;
+    console.log('Background set to original theme (Button 2)');
   });
 
+  // Light Button Three (sets "three" theme)
   lightButtonThree.addEventListener('click', () => {
     backgroundElement.src = backgroundThreeSrc;
-    console.log('Background set to three');
+    macbookProDiv.style.backgroundColor = colorThree;
+    overlapGroupWrapperDiv.style.backgroundColor = colorThree;
+    console.log('Background set to three theme (Button 3)');
   });
 } else {
-  console.error('Background or light button elements not found. Background switching will not work.');
+  console.error('One or more elements for background switching not found. Background switching will not work completely.');
+  if (!backgroundElement) console.error('backgroundElement not found');
+  if (!lightButtonOne) console.error('lightButtonOne not found');
+  if (!lightButtonTwo) console.error('lightButtonTwo not found');
+  if (!lightButtonThree) console.error('lightButtonThree not found');
+  if (!macbookProDiv) console.error('macbookProDiv not found');
+  if (!overlapGroupWrapperDiv) console.error('overlapGroupWrapperDiv not found');
 }
