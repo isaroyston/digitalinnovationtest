@@ -1,12 +1,34 @@
 const audioButton = document.querySelector(".audio-button");
 const chatBox = document.querySelector(".chat-box");
 const webcamVideo = document.querySelector(".webcam-video");
+const avatarImage = document.getElementById('avatarImage');
+const avatarVideo = document.getElementById('avatarVideo');
 
 const DEEPSEEK_API_KEY = "sk-0e19faf29ca241e4bab6264a0536232b"; // Please ensure this key is kept secure and not exposed publicly in production
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
-// Start webcam stream
-// ... other constant declarations ...
+// Function to call when the API starts talking
+function showAvatarVideo() {
+  if (avatarImage) avatarImage.style.display = 'none';
+  if (avatarVideo) {
+    avatarVideo.style.display = 'block'; // Or 'inline', 'flex', etc., depending on your layout
+    avatarVideo.play().catch(error => console.error("Avatar video play failed:", error));
+  }
+}
+
+// Function to call when the API stops talking
+function showAvatarImage() {
+  if (avatarVideo) {
+    avatarVideo.style.display = 'none';
+    avatarVideo.pause();
+    // Optional: Reset video to the beginning
+    // avatarVideo.currentTime = 0;
+  }
+  if (avatarImage) avatarImage.style.display = 'block'; // Or 'inline', 'flex', etc.
+}
+
+// Initial state: show the image
+showAvatarImage();
 
 async function startWebcam() {
   try {
@@ -52,7 +74,7 @@ if (recognition) {
 
   audioButton.addEventListener("mouseleave", () => {
     // Optional: stop recognition if mouse leaves button while pressed
-    // recognition.stop(); 
+    // recognition.stop();
   });
 
   recognition.onresult = async (event) => {
@@ -63,10 +85,11 @@ if (recognition) {
     try {
       const assistantReply = await getDeepseekReply(userText);
       displayText(`助手：${assistantReply}`);
-      speakText(assistantReply); // This might pause the video
+      speakText(assistantReply); // This will trigger avatar change
     } catch (err) {
       console.error("Deepseek API 出错:", err);
       displayText("助手：哎呀，我出错了，请再试一次。");
+      showAvatarImage(); // Ensure image is shown on API error
     }
   };
 
@@ -81,6 +104,7 @@ if (recognition) {
         errorMessage = "助手：麦克风权限被拒绝，请允许访问。";
     }
     displayText(errorMessage);
+    showAvatarImage(); // Ensure image is shown on recognition error
   };
 
   recognition.onend = () => {
@@ -89,13 +113,16 @@ if (recognition) {
     if (chatBox.innerText === "正在聆听中，请说话...") {
         chatBox.innerText = "请点击麦克风和我说话吧～";
     }
+    // It's generally better to switch back to image when speech synthesis ends,
+    // but if recognition ends abruptly, ensure the image is shown.
+    // showAvatarImage(); // Consider if needed here or if onend of speakText is sufficient
   };
 
 } else {
   chatBox.innerText = "抱歉，您的浏览器不支持语音识别功能。";
   console.error("Speech Recognition API not supported in this browser.");
   // Disable audio button if recognition is not supported
-  audioButton.disabled = true; 
+  audioButton.disabled = true;
   audioButton.style.cursor = "not-allowed";
 }
 
@@ -107,7 +134,7 @@ function displayText(text) {
 function speakText(text) {
   if (!('speechSynthesis' in window)) {
     console.warn("Speech Synthesis not supported in this browser.");
-    // Optionally, display a message to the user that speech output is not available
+    showAvatarImage(); // Ensure image is shown if speech synthesis is not supported
     return;
   }
 
@@ -116,10 +143,12 @@ function speakText(text) {
 
   utterance.onstart = () => {
     console.log("Speech synthesis started. Video paused:", webcamVideo.paused);
+    showAvatarVideo(); // Switch to video when assistant starts speaking
   };
 
   utterance.onend = () => {
     console.log("Speech synthesis ended.");
+    showAvatarImage(); // Switch back to image when assistant stops speaking
     // Attempt to play the video again if it was paused
     if (webcamVideo.paused) {
       console.log("Attempting to resume video playback after speech.");
@@ -131,6 +160,7 @@ function speakText(text) {
 
   utterance.onerror = (event) => {
     console.error("Speech synthesis error:", event.error);
+    showAvatarImage(); // Switch back to image on speech error
     // Also try to resume video if it was paused and an error occurred during speech
     if (webcamVideo.paused) {
       console.log("Attempting to resume video playback after speech error.");
@@ -141,7 +171,7 @@ function speakText(text) {
   };
 
   // Cancel any ongoing speech before speaking the new utterance
-  speechSynthesis.cancel(); 
+  speechSynthesis.cancel();
   speechSynthesis.speak(utterance);
 }
 
