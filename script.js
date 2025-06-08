@@ -1,63 +1,113 @@
 const audioButton = document.querySelector(".audio-button");
 const chatBox = document.querySelector(".chat-box");
 const webcamVideo = document.querySelector(".webcam-video");
-const avatarImage = document.getElementById('avatarImage');
-const avatarVideo = document.getElementById('avatarVideo');
+// const avatarImage = document.getElementById('avatarImage'); // Removed
+const avatarIdleVideo = document.getElementById('avatarIdleVideo');
+const avatarTalkingVideo = document.getElementById('avatarTalkingVideo'); // Renamed from avatarVideo
+const avatarGoodbyeVideo = document.getElementById('avatarGoodbyeVideo');
 
-const DEEPSEEK_API_KEY = "sk-0e19faf29ca241e4bab6264a0536232b"; // Please ensure this key is kept secure and not exposed publicly in production
+const DEEPSEEK_API_KEY = "sk-0e19faf29ca241e4bab6264a0536232b";
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
-const FADE_DURATION = 300; // Milliseconds, should match CSS transition duration
+const FADE_DURATION = 300;
+let activeAvatarVideo = null; // Stores the DOM element of the currently active video
 
-// Function to call when the API starts talking
-function showAvatarVideo() {
-  if (avatarImage) {
-    avatarImage.style.opacity = '0';
-    setTimeout(() => {
-      avatarImage.style.display = 'none';
-    }, FADE_DURATION);
-  }
-  if (avatarVideo) {
-    avatarVideo.style.display = 'block'; // Or 'flex', etc., depending on your layout
-    // Ensure display is applied before starting opacity transition
-    requestAnimationFrame(() => {
-      avatarVideo.style.opacity = '1';
-    });
-    avatarVideo.play().catch(error => console.error("Avatar video play failed:", error));
+function playVideo(videoElement) {
+  if (videoElement) {
+    videoElement.play().catch(error => console.error("Avatar video play failed:", videoElement.id, error));
   }
 }
 
-// Function to call when the API stops talking
-function showAvatarImage() {
-  if (avatarVideo) {
-    avatarVideo.style.opacity = '0';
+function switchAvatarVideo(newVideo, loop = true) {
+  const oldVideo = activeAvatarVideo;
+
+  if (oldVideo === newVideo && oldVideo && oldVideo.style.display !== 'none') {
+    if (oldVideo.paused) playVideo(oldVideo);
+    return;
+  }
+
+  if (oldVideo && oldVideo !== newVideo) {
+    oldVideo.style.opacity = '0';
     setTimeout(() => {
-      avatarVideo.style.display = 'none';
-      avatarVideo.pause();
+      if (oldVideo.style.opacity === '0') { // Check if it wasn't changed again
+          oldVideo.style.display = 'none';
+          oldVideo.pause();
+      }
     }, FADE_DURATION);
   }
-  if (avatarImage) {
-    avatarImage.style.display = 'block'; // Or 'flex', etc.
-    // Ensure display is applied before starting opacity transition
-    requestAnimationFrame(() => {
-      avatarImage.style.opacity = '1';
-    });
+
+  if (newVideo) {
+    const delay = (oldVideo && oldVideo !== newVideo) ? FADE_DURATION : 0;
+    setTimeout(() => {
+      // Ensure any other avatar videos are hidden if a quick switch happened
+      [avatarIdleVideo, avatarTalkingVideo, avatarGoodbyeVideo].forEach(vid => {
+        if (vid && vid !== newVideo) {
+          vid.style.display = 'none';
+          vid.style.opacity = '0';
+          vid.pause();
+        }
+      });
+
+      newVideo.style.display = 'block';
+      newVideo.loop = loop;
+      newVideo.currentTime = 0;
+      requestAnimationFrame(() => { // Ensure display:block is rendered before opacity transition
+        newVideo.style.opacity = '1';
+      });
+      playVideo(newVideo);
+      activeAvatarVideo = newVideo;
+    }, delay);
+  } else if (oldVideo) { // If newVideo is null, just hide the old one
+    oldVideo.style.opacity = '0';
+    setTimeout(() => {
+      if (oldVideo.style.opacity === '0') {
+          oldVideo.style.display = 'none';
+          oldVideo.pause();
+      }
+      activeAvatarVideo = null;
+    }, FADE_DURATION);
+  }
+}
+
+function showAvatarIdle() {
+  switchAvatarVideo(avatarIdleVideo, true);
+}
+
+function showAvatarTalking() {
+  switchAvatarVideo(avatarTalkingVideo, true);
+}
+
+function showAvatarGoodbye() {
+  switchAvatarVideo(avatarGoodbyeVideo, false); // Goodbye video does not loop
+  if (avatarGoodbyeVideo) {
+    avatarGoodbyeVideo.onended = () => {
+      showAvatarIdle(); // Go back to idle after goodbye video finishes
+    };
   }
 }
 
 // Initial state setup:
-if (avatarImage) {
-    avatarImage.style.opacity = '1';
-    avatarImage.style.display = 'block'; // Or your default display
+// The HTML for avatarIdleVideo has autoplay, so it should start.
+// We ensure JS knows it's the active one.
+if (avatarIdleVideo) {
+    activeAvatarVideo = avatarIdleVideo;
+    // Ensure others are correctly hidden if HTML wasn't perfect
+    if(avatarTalkingVideo) {
+        avatarTalkingVideo.style.display = 'none';
+        avatarTalkingVideo.style.opacity = '0';
+    }
+    if(avatarGoodbyeVideo) {
+        avatarGoodbyeVideo.style.display = 'none';
+        avatarGoodbyeVideo.style.opacity = '0';
+    }
+} else {
+    console.error("avatarIdleVideo not found for initial setup.");
 }
-if (avatarVideo) {
-    avatarVideo.style.opacity = '0';
-    avatarVideo.style.display = 'none'; // Matches your HTML inline style
-}
+
 
 async function startWebcam() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true }); // This line triggers the permission prompt
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     webcamVideo.srcObject = stream;
     webcamVideo.onloadedmetadata = () => {
       webcamVideo.play().then(() => {
@@ -72,17 +122,15 @@ async function startWebcam() {
     chatBox.innerText = "无法访问摄像头，请检查权限设置。";
   }
 }
-startWebcam(); // This ensures the function runs as soon as the script is loaded
+startWebcam();
 
 
-// Initialize speech recognition
 const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 if (recognition) {
   recognition.lang = "zh-CN";
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
-  // Press and hold to start, release to stop
   audioButton.addEventListener("mousedown", () => {
     chatBox.innerText = "正在聆听中，请说话...";
     try {
@@ -97,24 +145,26 @@ if (recognition) {
     recognition.stop();
   });
 
-  audioButton.addEventListener("mouseleave", () => {
-    // Optional: stop recognition if mouse leaves button while pressed
-    // recognition.stop();
-  });
-
   recognition.onresult = async (event) => {
     const userText = event.results[0][0].transcript;
     displayText(`你：${userText}`);
-    console.log("Video paused state before API call/speakText:", webcamVideo.paused);
 
     try {
       const assistantReply = await getDeepseekReply(userText);
       displayText(`助手：${assistantReply}`);
-      speakText(assistantReply); // This will trigger avatar change
+
+      const userSaidGoodbye = /再见|拜拜|goodbye/i.test(userText);
+      const assistantSaidGoodbye = /再见|拜拜|下次见|goodbye/i.test(assistantReply);
+
+      if (userSaidGoodbye && assistantSaidGoodbye) {
+        speakText(assistantReply, true); // Pass true for goodbye
+      } else {
+        speakText(assistantReply, false);
+      }
     } catch (err) {
       console.error("Deepseek API 出错:", err);
       displayText("助手：哎呀，我出错了，请再试一次。");
-      showAvatarImage(); // Ensure image is shown on API error
+      showAvatarIdle(); // Revert to idle on API error
     }
   };
 
@@ -129,24 +179,18 @@ if (recognition) {
         errorMessage = "助手：麦克风权限被拒绝，请允许访问。";
     }
     displayText(errorMessage);
-    showAvatarImage(); // Ensure image is shown on recognition error
+    showAvatarIdle(); // Revert to idle on recognition error
   };
 
   recognition.onend = () => {
-    // Optional: actions to take when recognition service has disconnected
-    // For example, update UI if not already handled by mouseup/mouseleave
     if (chatBox.innerText === "正在聆听中，请说话...") {
         chatBox.innerText = "请点击麦克风和我说话吧～";
     }
-    // It's generally better to switch back to image when speech synthesis ends,
-    // but if recognition ends abruptly, ensure the image is shown.
-    // showAvatarImage(); // Consider if needed here or if onend of speakText is sufficient
   };
 
 } else {
   chatBox.innerText = "抱歉，您的浏览器不支持语音识别功能。";
   console.error("Speech Recognition API not supported in this browser.");
-  // Disable audio button if recognition is not supported
   audioButton.disabled = true;
   audioButton.style.cursor = "not-allowed";
 }
@@ -156,10 +200,10 @@ function displayText(text) {
   chatBox.innerText = text;
 }
 
-function speakText(text) {
+function speakText(text, isGoodbye = false) { // Added isGoodbye parameter
   if (!('speechSynthesis' in window)) {
     console.warn("Speech Synthesis not supported in this browser.");
-    showAvatarImage(); // Ensure image is shown if speech synthesis is not supported
+    showAvatarIdle();
     return;
   }
 
@@ -167,16 +211,18 @@ function speakText(text) {
   utterance.lang = "zh-CN";
 
   utterance.onstart = () => {
-    console.log("Speech synthesis started. Video paused:", webcamVideo.paused);
-    showAvatarVideo(); // Switch to video when assistant starts speaking
+    console.log("Speech synthesis started.");
+    showAvatarTalking(); // Always show talking animation when speech starts
   };
 
   utterance.onend = () => {
     console.log("Speech synthesis ended.");
-    showAvatarImage(); // Switch back to image when assistant stops speaking
-    // Attempt to play the video again if it was paused
+    if (isGoodbye) {
+      showAvatarGoodbye(); // Show goodbye animation
+    } else {
+      showAvatarIdle(); // Revert to idle animation
+    }
     if (webcamVideo.paused) {
-      console.log("Attempting to resume video playback after speech.");
       webcamVideo.play().catch(err => {
         console.error("Failed to resume video playback after speech:", err);
       });
@@ -185,17 +231,14 @@ function speakText(text) {
 
   utterance.onerror = (event) => {
     console.error("Speech synthesis error:", event.error);
-    showAvatarImage(); // Switch back to image on speech error
-    // Also try to resume video if it was paused and an error occurred during speech
+    showAvatarIdle(); // Revert to idle on speech error
     if (webcamVideo.paused) {
-      console.log("Attempting to resume video playback after speech error.");
       webcamVideo.play().catch(err => {
         console.error("Failed to resume video playback after speech error:", err);
       });
     }
   };
 
-  // Cancel any ongoing speech before speaking the new utterance
   speechSynthesis.cancel();
   speechSynthesis.speak(utterance);
 }
@@ -208,7 +251,7 @@ async function getDeepseekReply(userInput) {
       Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
     },
     body: JSON.stringify({
-      model: "deepseek-chat", // Ensure this model name is correct
+      model: "deepseek-chat",
       messages: [
         {
           role: "system",
@@ -237,3 +280,13 @@ async function getDeepseekReply(userInput) {
     throw new Error("Invalid response structure from API.");
   }
 }
+
+// Ensure initial state is correctly set after all elements are potentially defined
+// The HTML for avatarIdleVideo has autoplay, so it should start.
+// The activeAvatarVideo variable is set above.
+// If avatarIdleVideo is not found, this will log an error.
+// If it is found, it's assumed to be the active one due to HTML autoplay.
+// The switchAvatarVideo function will handle transitions from this state.
+// No explicit call to showAvatarIdle() here is needed if HTML handles initial play.
+// However, to be absolutely sure JS state matches, we can call it.
+showAvatarIdle(); // Call this to initialize the state via JS.
